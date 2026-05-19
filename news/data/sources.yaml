@@ -1,5 +1,9 @@
-version: 1
+version: 2
 updated_at: 2026-05-19
+purpose: >-
+  Source configuration for SuSu Feed. Sources are inputs, not subscriptions.
+  Every selected item must still pass personal relevance and active-question filters.
+
 admission_rules:
   include_if_any:
     - improves_a_decision
@@ -17,32 +21,107 @@ admission_rules:
 source_buckets:
   - id: work_signals
     description: Company, operator, product, market, AI/tooling, engineering leadership
-    examples:
-      - industry blogs
-      - product/company announcements
-      - operator essays
-      - engineering leadership sources
-      - AI/tooling release notes if leverage-relevant
   - id: life_family_signals
     description: Practical life, family, parenting, household, health, local usefulness
-    examples:
-      - practical family/lifestyle sources
-      - local/community information
-      - health/routine sources
   - id: idea_fuel
     description: Cross-domain material that can generate new product or strategy thoughts
-    examples:
-      - essays
-      - market observations
-      - niche blogs
-      - product teardowns
   - id: internal_context
     description: Private context that should shape relevance scoring
-    examples:
-      - personal notes
-      - active questions
-      - current goals
-      - unresolved decisions
+
+feeds:
+  - id: hn_frontpage
+    bucket: work_signals
+    name: Hacker News front page
+    url: https://hnrss.org/frontpage
+    trust: medium
+    why: Broad early signal for developer, startup, AI, tooling, and technical culture shifts.
+    use_for:
+      - engineering leverage
+      - startup patterns
+      - weak signals
+    caution: Very noisy; only select if it connects to active questions.
+
+  - id: openai_news
+    bucket: work_signals
+    name: OpenAI News
+    url: https://openai.com/news/rss.xml
+    trust: high
+    why: AI platform and product shifts can change engineering, product, and market assumptions.
+    use_for:
+      - AI leverage
+      - product shifts
+      - strategic timing
+    caution: Treat announcements as signals, not conclusions.
+
+  # Anthropic currently does not expose a stable RSS feed here; track manually via watch topics/search.
+  - id: simon_willison
+    bucket: idea_fuel
+    name: Simon Willison
+    url: https://simonwillison.net/atom/everything/
+    trust: high
+    why: Practical AI/software observations with strong signal-to-noise and operator usefulness.
+    use_for:
+      - technical judgment
+      - AI tooling implications
+      - practical software leverage
+    caution: Prefer posts with reusable implications over implementation minutiae.
+
+  - id: stripe_blog
+    bucket: work_signals
+    name: Stripe Blog
+    url: https://stripe.com/blog/feed.rss
+    trust: high
+    why: Product, infrastructure, payments, platform, and internet-business operating patterns.
+    use_for:
+      - product strategy
+      - platform thinking
+      - business infrastructure
+    caution: Select only if relevant to marketplace, creator, or systems questions.
+
+  - id: noahpinion
+    bucket: idea_fuel
+    name: Noahpinion
+    url: https://www.noahpinion.blog/feed
+    trust: medium
+    why: Macro, technology, economy, and society patterns that can widen context.
+    use_for:
+      - broad context
+      - contrarian thinking
+      - societal/economic shifts
+    caution: Do not over-weight macro unless it changes decisions or mental models.
+
+  - id: james_clear
+    bucket: growth
+    name: James Clear
+    url: https://jamesclear.com/feed
+    trust: medium
+    why: Occasional useful personal systems, habits, and clarity reminders.
+    use_for:
+      - personal systems
+      - routines
+      - energy and attention
+    caution: Penalize generic productivity advice; select only concrete, non-obvious usefulness.
+
+  - id: greater_good
+    bucket: life_family_signals
+    name: Greater Good Science Center
+    url: https://greatergood.berkeley.edu/site/rss
+    trust: medium
+    why: Relationship, parenting, wellbeing, and human behavior research for family/life quality.
+    use_for:
+      - family quality
+      - emotional intelligence
+      - wellbeing
+    caution: Prefer practical implications over feel-good generalities.
+
+manual_watch_topics:
+  - creator marketplaces
+  - UGC advertising workflows
+  - trust and reputation systems
+  - AI agents for operators
+  - engineering leadership at small high-leverage teams
+  - family routines and attention quality
+  - personal knowledge systems
 
 scoring:
   dimensions:
