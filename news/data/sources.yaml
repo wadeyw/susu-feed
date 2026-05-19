@@ -1,0 +1,58 @@
+version: 1
+updated_at: 2026-05-19
+admission_rules:
+  include_if_any:
+    - improves_a_decision
+    - challenges_a_stale_assumption
+    - reveals_an_early_pattern
+    - sparks_a_concrete_idea
+    - improves_life_or_family_quality
+  exclude_if_any:
+    - generic_news_without_personal_relevance
+    - repeated_opinion_without_new_signal
+    - high_hype_low_substance
+    - outrage_or_attention_harvesting
+    - broadly_interesting_but_not_useful
+
+source_buckets:
+  - id: work_signals
+    description: Company, operator, product, market, AI/tooling, engineering leadership
+    examples:
+      - industry blogs
+      - product/company announcements
+      - operator essays
+      - engineering leadership sources
+      - AI/tooling release notes if leverage-relevant
+  - id: life_family_signals
+    description: Practical life, family, parenting, household, health, local usefulness
+    examples:
+      - practical family/lifestyle sources
+      - local/community information
+      - health/routine sources
+  - id: idea_fuel
+    description: Cross-domain material that can generate new product or strategy thoughts
+    examples:
+      - essays
+      - market observations
+      - niche blogs
+      - product teardowns
+  - id: internal_context
+    description: Private context that should shape relevance scoring
+    examples:
+      - personal notes
+      - active questions
+      - current goals
+      - unresolved decisions
+
+scoring:
+  dimensions:
+    relevance_to_active_questions: 0-5
+    strategic_importance: 0-5
+    novelty: 0-5
+    actionability: 0-5
+    idea_generation_potential: 0-5
+    life_or_family_usefulness: 0-5
+  penalties:
+    hype_penalty: 0--3
+    noise_penalty: 0--3
+  notes: Final selection should optimize for high score plus domain diversity.

@@ -1,0 +1,50 @@
+version: 1
+updated_at: 2026-05-19
+purpose: Personal relevance model for SuSu Feed
+
+identity:
+  summary: >-
+    Senior technical leader with strong 0-to-1, scaling, systems, and business-technology alignment experience.
+  orientation:
+    - systems_thinking
+    - leadership
+    - product_strategy
+    - engineering_execution
+    - long_term_value
+
+relevance_domains:
+  - id: work
+    description: Company, leadership, execution, product, engineering, org, market-relevant signals
+    target_weight: 0.30
+  - id: ideas
+    description: New product angles, market gaps, creator/advertiser ecosystem patterns, cross-domain analogies
+    target_weight: 0.20
+  - id: growth
+    description: Thinking quality, judgment, leadership development, mental models, habit/routine improvement
+    target_weight: 0.15
+  - id: life
+    description: Lifestyle design, energy, health, logistics, quality-of-life improvements
+    target_weight: 0.15
+  - id: family
+    description: Family systems, parenting, routines, practical household usefulness, relationship quality
+    target_weight: 0.20
+
+selection_rules:
+  max_daily_items: 6
+  prefer_novel_over_repetitive: true
+  prefer_decision_relevance_over_entertainment: true
+  require_why_it_matters: true
+  suppress_generic_news: true
+  enforce_domain_mix: true
+
+penalties:
+  hype: -2
+  generic_productivity_content: -2
+  repeated_topic_without_new_signal: -3
+  outrage_or_attention_trap: -3
+
+desired_outputs:
+  include_idea_sparks: true
+  include_life_or_family_nudge: true
+  include_ignore_section: true
+  include_reflection_question: true

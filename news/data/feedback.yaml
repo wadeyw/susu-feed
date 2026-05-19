@@ -1,0 +1,22 @@
+version: 1
+updated_at: 2026-05-19
+item_feedback_states:
+  - useful
+  - not_useful
+  - obvious
+  - more_like_this
+  - less_like_this
+  - acted_on
+  - sparked_idea
+  - changed_my_mind
+  - not_relevant_now
+
+weekly_calibration_questions:
+  - What was most useful this week?
+  - What was too noisy or generic?
+  - What should get more attention next week?
+  - What active question should be added, changed, or removed?
+
+storage_note: >-
+  Feedback can remain lightweight and file-based at first. Each generated item should eventually
+  get a stable item ID so feedback can be tracked over time.
