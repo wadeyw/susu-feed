@@ -1,137 +1,137 @@
-version: 2
-updated_at: 2026-05-19
+version: 3
+updated_at: 2026-05-25
 purpose: >-
-  Source configuration for SuSu Feed. Sources are inputs, not subscriptions.
-  Every selected item must still pass personal relevance and active-question filters.
+  Source configuration for SuSu Feed. Sources are inputs to judgment, not subscriptions.
+  Every selected item must still pass personal relevance, anti-slop, anti-repeat,
+  and active-question filters.
 
 admission_rules:
   include_if_any:
-    - improves_a_decision
+    - improves_a_real_decision
+    - clarifies_a_tradeoff
     - challenges_a_stale_assumption
-    - reveals_an_early_pattern
-    - sparks_a_concrete_idea
-    - improves_life_or_family_quality
+    - reveals_a_future_pattern_with_consequences
+    - sharpens_business_or_product_judgment
+    - improves_the_knowledge_system
+    - improves_daughters_future_readiness
   exclude_if_any:
     - generic_news_without_personal_relevance
     - repeated_opinion_without_new_signal
+    - tells_what_works_without_tradeoffs
     - high_hype_low_substance
     - outrage_or_attention_harvesting
+    - low_substance_emotion_first
     - broadly_interesting_but_not_useful
+    - inspirational_quote_energy
 
-source_buckets:
-  - id: work_signals
-    description: Company, operator, product, market, AI/tooling, engineering leadership
-  - id: life_family_signals
-    description: Practical life, family, parenting, household, health, local usefulness
-  - id: idea_fuel
-    description: Cross-domain material that can generate new product or strategy thoughts
-  - id: internal_context
-    description: Private context that should shape relevance scoring
+anti_repeat:
+  recent_history_days: 14
+  dedupe_on:
+    - url
+    - normalized_title
+  allow_repeat_if:
+    - materially_new_signal
+    - changed_implication
+    - major_breakthrough_not_previous_coverage
+
+source_roles:
+  - id: structural_ai
+    description: Structural changes in AI, software, work, and institutions.
+  - id: operator_patterns
+    description: Practical system design, engineering, product, and execution patterns.
+  - id: business_strategy
+    description: Opportunity selection, positioning, adoption, trust, and business-building.
+  - id: decision_thinking
+    description: Frameworks, contradictions, tradeoffs, and decision quality.
+  - id: future_skills
+    description: Communication, self-learning, confidence, and future-readiness for children.
+  - id: knowledge_systems
+    description: Memory, retrieval, note systems, and knowledge compounding.
 
 feeds:
-  - id: hn_frontpage
-    bucket: work_signals
-    name: Hacker News front page
-    url: https://hnrss.org/frontpage
-    trust: medium
-    why: Broad early signal for developer, startup, AI, tooling, and technical culture shifts.
-    use_for:
-      - engineering leverage
-      - startup patterns
-      - weak signals
-    caution: Very noisy; only select if it connects to active questions.
-
-  - id: openai_news
-    bucket: work_signals
-    name: OpenAI News
+  - id: openai_blog
+    role: structural_ai
+    name: OpenAI Blog
     url: https://openai.com/news/rss.xml
     trust: high
-    why: AI platform and product shifts can change engineering, product, and market assumptions.
+    why: First-hand product and research signals that can change world-model assumptions.
     use_for:
-      - AI leverage
-      - product shifts
-      - strategic timing
-    caution: Treat announcements as signals, not conclusions.
+      - AI platform shifts
+      - capability direction
+      - ecosystem timing
+    caution: Announcements are signals, not conclusions; prefer posts with strategic implication.
 
-  # Anthropic currently does not expose a stable RSS feed here; track manually via watch topics/search.
   - id: simon_willison
-    bucket: idea_fuel
+    role: operator_patterns
     name: Simon Willison
     url: https://simonwillison.net/atom/everything/
     trust: high
-    why: Practical AI/software observations with strong signal-to-noise and operator usefulness.
+    why: High-signal practical writing about AI tooling, software patterns, and operator lessons.
     use_for:
+      - agent design patterns
       - technical judgment
-      - AI tooling implications
-      - practical software leverage
-    caution: Prefer posts with reusable implications over implementation minutiae.
+      - practical leverage
+    caution: Prefer posts with reusable implications over narrow implementation minutiae.
 
   - id: stripe_blog
-    bucket: work_signals
+    role: business_strategy
     name: Stripe Blog
     url: https://stripe.com/blog/feed.rss
     trust: high
-    why: Product, infrastructure, payments, platform, and internet-business operating patterns.
+    why: Strong source for platform, payments, trust, and internet-business operating patterns.
     use_for:
-      - product strategy
-      - platform thinking
       - business infrastructure
-    caution: Select only if relevant to marketplace, creator, or systems questions.
+      - trust rails
+      - market structure
+    caution: Select only if it sharpens product, business, or strategic timing decisions.
 
-  - id: noahpinion
-    bucket: idea_fuel
-    name: Noahpinion
-    url: https://www.noahpinion.blog/feed
+  - id: kevin_kelly
+    role: structural_ai
+    name: Kevin Kelly
+    url: https://kk.org/feed/
     trust: medium
-    why: Macro, technology, economy, and society patterns that can widen context.
+    why: Long-horizon technology and society thinking that can widen future models.
     use_for:
-      - broad context
-      - contrarian thinking
-      - societal/economic shifts
-    caution: Do not over-weight macro unless it changes decisions or mental models.
+      - future implications
+      - technology and society
+      - long-range thinking
+    caution: Prefer pieces with concrete downstream consequence, not pure futurist mood.
 
-  - id: james_clear
-    bucket: growth
-    name: James Clear
-    url: https://jamesclear.com/feed
+  - id: hacker_news
+    role: operator_patterns
+    name: Hacker News front page
+    url: https://hnrss.org/frontpage
     trust: medium
-    why: Occasional useful personal systems, habits, and clarity reminders.
+    why: Broad weak-signal radar for technical shifts, tools, and startup chatter.
     use_for:
-      - personal systems
-      - routines
-      - energy and attention
-    caution: Penalize generic productivity advice; select only concrete, non-obvious usefulness.
-
-  - id: greater_good
-    bucket: life_family_signals
-    name: Greater Good Science Center
-    url: https://greatergood.berkeley.edu/site/rss
-    trust: medium
-    why: Relationship, parenting, wellbeing, and human behavior research for family/life quality.
-    use_for:
-      - family quality
-      - emotional intelligence
-      - wellbeing
-    caution: Prefer practical implications over feel-good generalities.
+      - weak signals
+      - tool emergence
+      - industry discussion
+    caution: Very noisy; select only if an item strongly connects to an active question.
 
 manual_watch_topics:
-  - creator marketplaces
-  - UGC advertising workflows
-  - trust and reputation systems
   - AI agents for operators
-  - engineering leadership at small high-leverage teams
-  - family routines and attention quality
-  - personal knowledge systems
+  - long-running AI application design
+  - opportunity validation and the right problem
+  - Paul Graham essays on founders, taste, and work
+  - trust rails for businesses and agents
+  - communication and writing as durable future skills
+  - self-learning, motivation, and confidence in children
+  - external memory and knowledge systems
+  - decision quality through tradeoffs and contradictions
 
 scoring:
   dimensions:
     relevance_to_active_questions: 0-5
-    strategic_importance: 0-5
-    novelty: 0-5
+    model_update_strength: 0-5
+    tradeoff_clarity: 0-5
+    business_or_future_consequence: 0-5
     actionability: 0-5
-    idea_generation_potential: 0-5
-    life_or_family_usefulness: 0-5
+    knowledge_compounding_value: 0-5
   penalties:
     hype_penalty: 0--3
-    noise_penalty: 0--3
-  notes: Final selection should optimize for high score plus domain diversity.
+    repetition_penalty: 0--4
+    slop_penalty: 0--5
+  notes: >-
+    Final selection should optimize for decision usefulness, framework quality,
+    and track diversity rather than volume or novelty alone.

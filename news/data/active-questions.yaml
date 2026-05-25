@@ -1,28 +1,28 @@
-version: 1
-updated_at: 2026-05-19
+version: 2
+updated_at: 2026-05-25
 questions:
   - id: AQ1
-    domain: work
+    track: ai_change
     status: active
-    question: How can a personal feed become a leverage tool for thinking and decision support rather than a passive content stream?
     priority: high
+    question: "How is AI structurally changing technology, work, markets, institutions, and the world my family will live in?"
   - id: AQ2
-    domain: ideas
+    track: daughters_future
     status: active
-    question: Which emerging patterns around creators, marketplaces, trust, and workflow could become strategic product opportunities?
     priority: high
+    question: "What skills, habits, and environments will best prepare my daughters for a future where school may lag reality?"
   - id: AQ3
-    domain: growth
+    track: business_building
     status: active
-    question: What information consistently improves judgment, not just awareness?
     priority: high
+    question: "How can I build and run my own business with better opportunity selection, trust, execution, and strategic timing?"
   - id: AQ4
-    domain: family
+    track: decision_quality
     status: active
-    question: What small changes meaningfully improve family quality of life, routines, and attention? 
-    priority: medium
+    priority: high
+    question: "What frameworks, contradictions, tradeoffs, and failure modes help me make better decisions?"
   - id: AQ5
-    domain: life
+    track: knowledge_memory
     status: active
-    question: What practical shifts could improve energy, clarity, and sustainability week to week?
-    priority: medium
+    priority: high
+    question: "How can the knowledge base we are building help me remember, retrieve, and compound what matters?"

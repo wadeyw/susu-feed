@@ -1,50 +1,69 @@
-version: 1
-updated_at: 2026-05-19
+version: 2
+updated_at: 2026-05-25
 purpose: Personal relevance model for SuSu Feed
 
 identity:
   summary: >-
-    Senior technical leader with strong 0-to-1, scaling, systems, and business-technology alignment experience.
+    Senior technical leader and aspiring business builder optimizing for long-term leverage,
+    better judgment, and a compounding knowledge system.
   orientation:
     - systems_thinking
-    - leadership
-    - product_strategy
+    - contradiction_analysis
+    - business_building
     - engineering_execution
     - long_term_value
+    - learning_loops
 
-relevance_domains:
-  - id: work
-    description: Company, leadership, execution, product, engineering, org, market-relevant signals
-    target_weight: 0.30
-  - id: ideas
-    description: New product angles, market gaps, creator/advertiser ecosystem patterns, cross-domain analogies
+feed_language:
+  primary: English
+  note: English first unless explicitly changed later.
+
+relevance_tracks:
+  - id: ai_change
+    description: Structural changes in AI, software, labor, institutions, and the world being built.
+    target_weight: 0.26
+  - id: daughters_future
+    description: Future-readiness for the user's daughters, especially speaking, writing, self-learning, motivation, and confidence.
     target_weight: 0.20
-  - id: growth
-    description: Thinking quality, judgment, leadership development, mental models, habit/routine improvement
-    target_weight: 0.15
-  - id: life
-    description: Lifestyle design, energy, health, logistics, quality-of-life improvements
-    target_weight: 0.15
-  - id: family
-    description: Family systems, parenting, routines, practical household usefulness, relationship quality
-    target_weight: 0.20
+  - id: business_building
+    description: "Running an own business: opportunity validation, wedges, trust, execution, distribution, and durable moats."
+    target_weight: 0.22
+  - id: decision_quality
+    description: Judgment, tradeoffs, contradictions, failure modes, and better decision-making.
+    target_weight: 0.18
+  - id: knowledge_memory
+    description: Remembering through external systems, retrieval, knowledge compounding, and reusable understanding.
+    target_weight: 0.14
 
 selection_rules:
-  max_daily_items: 6
+  max_daily_items: 4
   prefer_novel_over_repetitive: true
   prefer_decision_relevance_over_entertainment: true
   require_why_it_matters: true
+  require_tradeoff_or_implication: true
   suppress_generic_news: true
-  enforce_domain_mix: true
+  enforce_track_mix: true
+  english_first: true
 
-penalties:
-  hype: -2
-  generic_productivity_content: -2
-  repeated_topic_without_new_signal: -3
-  outrage_or_attention_trap: -3
+anti_slop:
+  must_do_one_of:
+    - updates_a_mental_model
+    - clarifies_a_tradeoff
+    - improves_a_real_decision
+    - reveals_a_future_pattern_with_consequences
+    - improves_the_knowledge_system
+    - improves_daughters_future_readiness
+  penalize_if_any:
+    - generic_ai_news_without_implication
+    - tells_what_works_without_tradeoffs
+    - inspirational_quote_energy
+    - low_substance_emotion_first
+    - repeated_take_without_new_signal
+    - polished_but_obvious_summary
 
 desired_outputs:
   include_idea_sparks: true
   include_life_or_family_nudge: true
   include_ignore_section: true
   include_reflection_question: true
+  include_tradeoff_note_when_relevant: true
