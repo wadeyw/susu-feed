@@ -2,8 +2,9 @@
 """Collect candidate items for SuSu Feed.
 
 This script intentionally does not generate the final daily feed. It gathers a
-small candidate packet from configured feeds so an LLM/agent can curate against
-profile.yaml, active-questions.yaml, feedback.yaml, and recent feed history.
+candidate packet from configured feeds so an LLM/agent can curate against
+profile.yaml, active-questions.yaml, sources.yaml, feedback.yaml, and recent
+published history.
 """
 from __future__ import annotations
 
@@ -27,18 +28,20 @@ except Exception as exc:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[2]
 NEWS = ROOT / "news"
-SOURCES = NEWS / "data" / "sources.yaml"
-PROFILE = NEWS / "data" / "profile.yaml"
-QUESTIONS = NEWS / "data" / "active-questions.yaml"
-FEEDBACK = NEWS / "data" / "feedback.yaml"
-DAILY_DIR = NEWS / "daily"
+DATA = NEWS / "data"
+DAILY = NEWS / "daily"
+SOURCES = DATA / "sources.yaml"
+PROFILE = DATA / "profile.yaml"
+QUESTIONS = DATA / "active-questions.yaml"
+FEEDBACK = DATA / "feedback.yaml"
 
 USER_AGENT = "SuSuFeed/0.2 (+https://github.com/wadeyw/susu-feed)"
 MAX_PER_FEED = 6
-MAX_TOTAL = 48
+MAX_TOTAL = 60
 TIMEOUT = 12
-SOURCE_LINE_RE = re.compile(r"^- Source: .* — (?P<url>\S+)\s*$")
-TITLE_RE = re.compile(r"^###\s+\d+\)\s+(?P<title>.+?)\s*$")
+SOURCE_LINE_RE = re.compile(r"^- Source: (?P<source_name>.+?) — (?P<url>https?://\S+)\s*$")
+TITLE_LINE_RE = re.compile(r"^### \d+\) (?P<title>.+?)\s*$")
+DATE_LINE_RE = re.compile(r"^# (?P<date>\d{4}-\d{2}-\d{2}) Daily Feed\s*$")
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -56,12 +59,8 @@ def strip_text(value: str | None, limit: int = 500) -> str:
     return value[:limit]
 
 
-def normalize_title(value: str | None) -> str:
-    if not value:
-        return ""
-    value = strip_text(value, 240).lower()
-    value = re.sub(r"[^a-z0-9]+", " ", value)
-    return re.sub(r"\s+", " ", value).strip()
+def slug_text(value: str | None) -> str:
+    return re.sub(r"\W+", " ", (value or '').lower()).strip()
 
 
 def parse_date(value: str | None) -> str | None:
@@ -129,45 +128,49 @@ def parse_feed(xml_bytes: bytes) -> list[dict[str, str | None]]:
     return out
 
 
-def load_recent_history(days: int) -> dict[str, Any]:
-    cutoff = dt.date.today() - dt.timedelta(days=days)
+def collect_recent_history(lookback_days: int) -> dict[str, Any]:
+    today = dt.date.today()
     recent_urls: set[str] = set()
-    recent_titles: set[str] = set()
+    recent_title_slugs: set[str] = set()
     recent_items: list[dict[str, str]] = []
-    for path in sorted(DAILY_DIR.glob('*.md'), reverse=True):
-        if path.name.upper() == 'README.md':
-            continue
-        try:
-            report_date = dt.date.fromisoformat(path.stem)
-        except ValueError:
-            continue
-        if report_date < cutoff:
-            continue
-        current_title = None
-        for raw_line in path.read_text().splitlines():
-            line = raw_line.strip()
-            title_match = TITLE_RE.match(line)
+
+    for path in sorted(DAILY.glob('*.md'), reverse=True):
+        text = path.read_text()
+        lines = text.splitlines()
+        feed_date = None
+        titles: list[str] = []
+        source_pairs: list[tuple[str, str]] = []
+        for line in lines:
+            if feed_date is None:
+                m = DATE_LINE_RE.match(line)
+                if m:
+                    feed_date = dt.date.fromisoformat(m.group('date'))
+                    continue
+            title_match = TITLE_LINE_RE.match(line)
             if title_match:
-                current_title = strip_text(title_match.group('title'), 180)
-                norm = normalize_title(current_title)
-                if norm:
-                    recent_titles.add(norm)
+                titles.append(title_match.group('title').strip())
                 continue
             source_match = SOURCE_LINE_RE.match(line)
             if source_match:
-                url = strip_text(source_match.group('url'), 500)
-                if url:
-                    recent_urls.add(url)
-                    recent_items.append({
-                        'date': report_date.isoformat(),
-                        'title': current_title or '',
-                        'url': url,
-                    })
+                source_pairs.append((source_match.group('source_name').strip(), source_match.group('url').strip()))
+        if feed_date is None or (today - feed_date).days > lookback_days:
+            continue
+        for idx, (source_name, url) in enumerate(source_pairs):
+            title = titles[idx] if idx < len(titles) else ''
+            recent_urls.add(url)
+            if title:
+                recent_title_slugs.add(slug_text(title))
+            recent_items.append({
+                'date': feed_date.isoformat(),
+                'title': title,
+                'url': url,
+                'source_name': source_name,
+            })
     return {
-        'days': days,
-        'urls': sorted(recent_urls),
-        'normalized_titles': sorted(recent_titles),
-        'items': recent_items,
+        'lookback_days': lookback_days,
+        'recent_urls': sorted(recent_urls),
+        'recent_title_slugs': sorted(recent_title_slugs),
+        'recent_items': recent_items[:50],
     }
 
 
@@ -176,11 +179,17 @@ def main() -> int:
     profile = load_yaml(PROFILE)
     questions = load_yaml(QUESTIONS)
     feedback = load_yaml(FEEDBACK)
-    anti_repeat = sources.get('anti_repeat', {})
-    recent_days = int(anti_repeat.get('recent_history_days', 14) or 14)
-    recent_history = load_recent_history(recent_days)
-    recent_urls = set(recent_history['urls'])
-    recent_titles = set(recent_history['normalized_titles'])
+
+    reuse_guard = sources.get('recent_reuse_guard', {}) or {}
+    lookback_days = int(reuse_guard.get('lookback_days', 7))
+    history = collect_recent_history(lookback_days) if reuse_guard.get('enabled', True) else {
+        'lookback_days': 0,
+        'recent_urls': [],
+        'recent_title_slugs': [],
+        'recent_items': [],
+    }
+    recent_url_set = set(history['recent_urls'])
+    recent_title_slug_set = set(history['recent_title_slugs'])
 
     packet: dict[str, Any] = {
         'generated_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
@@ -189,14 +198,20 @@ def main() -> int:
         'purpose': 'Candidate packet for LLM curation. Do not include items unless they materially matter to the user.',
         'selection_rules': profile.get('selection_rules', {}),
         'anti_slop': profile.get('anti_slop', {}),
-        'anti_repeat': anti_repeat,
+        'source_admission_rules': sources.get('admission_rules', {}),
         'manual_watch_topics': sources.get('manual_watch_topics', []),
-        'relevance_tracks': profile.get('relevance_tracks', []),
+        'focus_tracks': profile.get('focus_tracks', []),
         'active_questions': questions.get('questions', []),
         'feedback_states': feedback.get('item_feedback_states', []),
-        'recent_history': recent_history,
+        'recent_reuse_guard': {
+            'enabled': reuse_guard.get('enabled', True),
+            'lookback_days': history['lookback_days'],
+            'blocked_recent_url_count': len(recent_url_set),
+            'blocked_recent_title_count': len(recent_title_slug_set),
+            'recent_items': history['recent_items'],
+        },
         'candidates': [],
-        'rejected_recent_duplicates': [],
+        'filtered_recent_duplicates': [],
         'fetch_errors': [],
     }
 
@@ -209,26 +224,30 @@ def main() -> int:
                 url = item.get('url') or ''
                 if not title or not url:
                     continue
-                normalized_title = normalize_title(title)
-                is_recent_duplicate = url in recent_urls or normalized_title in recent_titles
-                candidate = {
-                    'source_id': feed.get('id'),
-                    'source_name': feed.get('name'),
-                    'role': feed.get('role'),
-                    'source_why': feed.get('why'),
-                    'source_caution': feed.get('caution'),
-                    'normalized_title': normalized_title,
-                    'is_recent_duplicate': is_recent_duplicate,
-                    **item,
-                }
-                if is_recent_duplicate:
-                    packet['rejected_recent_duplicates'].append({
+                title_slug = slug_text(title)
+                duplicate_reasons = []
+                if reuse_guard.get('block_same_url', True) and url in recent_url_set:
+                    duplicate_reasons.append('recent_url')
+                if reuse_guard.get('block_same_title', True) and title_slug and title_slug in recent_title_slug_set:
+                    duplicate_reasons.append('recent_title')
+                if duplicate_reasons:
+                    packet['filtered_recent_duplicates'].append({
                         'source_id': feed.get('id'),
                         'title': title,
                         'url': url,
+                        'reasons': duplicate_reasons,
                     })
                     continue
-                packet['candidates'].append(candidate)
+                packet['candidates'].append({
+                    'source_id': feed.get('id'),
+                    'source_name': feed.get('name'),
+                    'source_role': feed.get('role'),
+                    'track_bias': feed.get('track_bias', []),
+                    'trust': feed.get('trust'),
+                    'source_why': feed.get('why'),
+                    'source_caution': feed.get('caution'),
+                    **item,
+                })
         except (urllib.error.URLError, TimeoutError, ET.ParseError, KeyError) as exc:
             packet['fetch_errors'].append({
                 'source_id': feed.get('id'),

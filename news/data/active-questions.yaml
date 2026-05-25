@@ -5,24 +5,24 @@ questions:
     track: ai_change
     status: active
     priority: high
-    question: "How is AI structurally changing technology, work, markets, institutions, and the world my family will live in?"
+    question: How is AI structurally changing software, work, markets, and institutions beyond surface-level product announcements?
   - id: AQ2
     track: daughters_future
     status: active
     priority: high
-    question: "What skills, habits, and environments will best prepare my daughters for a future where school may lag reality?"
+    question: What capabilities, habits, and environments will best prepare my daughters for an AI-shaped future, especially in speaking, writing, self-learning, motivation, and confidence?
   - id: AQ3
-    track: business_building
+    track: own_business
     status: active
     priority: high
-    question: "How can I build and run my own business with better opportunity selection, trust, execution, and strategic timing?"
+    question: What can help me build my own business with better timing, validation, trust, and execution rather than just more ideas?
   - id: AQ4
-    track: decision_quality
+    track: better_decisions
     status: active
     priority: high
-    question: "What frameworks, contradictions, tradeoffs, and failure modes help me make better decisions?"
+    question: What frameworks, tradeoffs, contradictions, or failure modes would help me make better decisions?
   - id: AQ5
-    track: knowledge_memory
+    track: remembering
     status: active
     priority: high
-    question: "How can the knowledge base we are building help me remember, retrieve, and compound what matters?"
+    question: How can the knowledge base we are building help me remember, retrieve, and reuse what matters?

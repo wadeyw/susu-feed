@@ -3,11 +3,11 @@
 ## What materially matters today
 
 ### 1) {{title}}
-- Track: {{ai_change|daughters_future|business_building|decision_quality|knowledge_memory}}
+- Track: {{ai_change|daughters_future|own_business|better_decisions|remembering}}
 - Why it matters to me: {{reason}}
-- Tradeoff / tension: {{what contradiction, cost, or tradeoff matters here}}
+- Tradeoff / tension: {{what this helps clarify, what it costs, or where it can fail}}
 - Implication: {{implication}}
-- Action: {{act|think|watch|ignore}}
+- Action: {{act|think|ignore|watch}}
 - Confidence: {{high|medium|low}}
 - Source: {{source_name}} — {{url}}
 
@@ -16,7 +16,7 @@
 - Why it matters to me: {{reason}}
 - Tradeoff / tension: {{tradeoff}}
 - Implication: {{implication}}
-- Action: {{act|think|watch|ignore}}
+- Action: {{act|think|ignore|watch}}
 - Confidence: {{high|medium|low}}
 - Source: {{source_name}} — {{url}}
 
@@ -43,4 +43,4 @@
 - Active questions used: {{question_ids}}
 - Source count reviewed: {{n}}
 - Selected item count: {{n}}
-- Recent-item guard: {{days}}-day URL/title dedupe enabled
+- Recent-item dedupe window: {{days}}

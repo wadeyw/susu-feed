@@ -1,137 +1,166 @@
 version: 3
 updated_at: 2026-05-25
 purpose: >-
-  Source configuration for SuSu Feed. Sources are inputs to judgment, not subscriptions.
-  Every selected item must still pass personal relevance, anti-slop, anti-repeat,
-  and active-question filters.
+  English-first source configuration for SuSu Feed. Sources are raw inputs, not subscriptions.
+  Every selected item must survive anti-slop, anti-repeat, and active-question filtering.
+
+source_roles:
+  - id: scout
+    description: Early weak signals worth checking, but noisy.
+  - id: operator
+    description: Practical implementation lessons, design choices, tradeoffs, and failure modes.
+  - id: strategist
+    description: Market structure, product selection, positioning, timing, and business pattern shifts.
+  - id: future_human
+    description: Education, capability-building, and long-term human development signals.
+  - id: memory_systems
+    description: Knowledge systems, retrieval, research, and reusable thinking infrastructure.
 
 admission_rules:
   include_if_any:
+    - updates_a_mental_model
+    - explains_tradeoffs
     - improves_a_real_decision
-    - clarifies_a_tradeoff
-    - challenges_a_stale_assumption
-    - reveals_a_future_pattern_with_consequences
-    - sharpens_business_or_product_judgment
-    - improves_the_knowledge_system
-    - improves_daughters_future_readiness
+    - reveals_an_early_pattern_with_implication
+    - sparks_a_concrete_idea
+    - improves_family_future_readiness
+    - strengthens_the_knowledge_base
   exclude_if_any:
     - generic_news_without_personal_relevance
-    - repeated_opinion_without_new_signal
     - tells_what_works_without_tradeoffs
+    - inspirational_quotes_or_motivation_filler
+    - low_substance_emotional_content
+    - repeated_opinion_without_new_signal
     - high_hype_low_substance
-    - outrage_or_attention_harvesting
-    - low_substance_emotion_first
     - broadly_interesting_but_not_useful
-    - inspirational_quote_energy
 
-anti_repeat:
-  recent_history_days: 14
-  dedupe_on:
-    - url
-    - normalized_title
-  allow_repeat_if:
-    - materially_new_signal
-    - changed_implication
-    - major_breakthrough_not_previous_coverage
-
-source_roles:
-  - id: structural_ai
-    description: Structural changes in AI, software, work, and institutions.
-  - id: operator_patterns
-    description: Practical system design, engineering, product, and execution patterns.
-  - id: business_strategy
-    description: Opportunity selection, positioning, adoption, trust, and business-building.
-  - id: decision_thinking
-    description: Frameworks, contradictions, tradeoffs, and decision quality.
-  - id: future_skills
-    description: Communication, self-learning, confidence, and future-readiness for children.
-  - id: knowledge_systems
-    description: Memory, retrieval, note systems, and knowledge compounding.
+recent_reuse_guard:
+  enabled: true
+  lookback_days: 10
+  block_same_url: true
+  block_same_title: true
+  allow_reuse_if:
+    - materially_new_development
+    - direct_followup_with_clear_new_signal
 
 feeds:
-  - id: openai_blog
-    role: structural_ai
-    name: OpenAI Blog
-    url: https://openai.com/news/rss.xml
-    trust: high
-    why: First-hand product and research signals that can change world-model assumptions.
-    use_for:
-      - AI platform shifts
-      - capability direction
-      - ecosystem timing
-    caution: Announcements are signals, not conclusions; prefer posts with strategic implication.
-
-  - id: simon_willison
-    role: operator_patterns
-    name: Simon Willison
-    url: https://simonwillison.net/atom/everything/
-    trust: high
-    why: High-signal practical writing about AI tooling, software patterns, and operator lessons.
-    use_for:
-      - agent design patterns
-      - technical judgment
-      - practical leverage
-    caution: Prefer posts with reusable implications over narrow implementation minutiae.
-
-  - id: stripe_blog
-    role: business_strategy
-    name: Stripe Blog
-    url: https://stripe.com/blog/feed.rss
-    trust: high
-    why: Strong source for platform, payments, trust, and internet-business operating patterns.
-    use_for:
-      - business infrastructure
-      - trust rails
-      - market structure
-    caution: Select only if it sharpens product, business, or strategic timing decisions.
-
-  - id: kevin_kelly
-    role: structural_ai
-    name: Kevin Kelly
-    url: https://kk.org/feed/
-    trust: medium
-    why: Long-horizon technology and society thinking that can widen future models.
-    use_for:
-      - future implications
-      - technology and society
-      - long-range thinking
-    caution: Prefer pieces with concrete downstream consequence, not pure futurist mood.
-
-  - id: hacker_news
-    role: operator_patterns
+  - id: hn_frontpage
+    role: scout
+    track_bias:
+      - ai_change
+      - own_business
+      - remembering
     name: Hacker News front page
     url: https://hnrss.org/frontpage
     trust: medium
-    why: Broad weak-signal radar for technical shifts, tools, and startup chatter.
+    why: Broad weak-signal surface for AI, developer tooling, startup, infra, and knowledge-work shifts.
     use_for:
       - weak signals
-      - tool emergence
-      - industry discussion
-    caution: Very noisy; select only if an item strongly connects to an active question.
+      - unusual tools or papers
+      - early discussion around meaningful changes
+    caution: Very noisy; select only when the item clearly updates a model or decision.
+
+  - id: openai_news
+    role: strategist
+    track_bias:
+      - ai_change
+      - own_business
+    name: OpenAI News
+    url: https://openai.com/news/rss.xml
+    trust: high
+    why: Major AI platform and product moves can shift assumptions about capability, distribution, and timing.
+    use_for:
+      - platform shifts
+      - product timing
+      - ecosystem implications
+    caution: Treat announcements as signals, not conclusions.
+
+  - id: simon_willison
+    role: operator
+    track_bias:
+      - ai_change
+      - better_decisions
+      - remembering
+    name: Simon Willison
+    url: https://simonwillison.net/atom/everything/
+    trust: high
+    why: Practical AI/software observations with real implementation detail and judgment value.
+    use_for:
+      - design implications
+      - AI tooling tradeoffs
+      - operator-grade patterns
+    caution: Prefer posts with reusable implications over narrow implementation minutiae.
+
+  - id: stripe_blog
+    role: strategist
+    track_bias:
+      - own_business
+      - ai_change
+      - better_decisions
+    name: Stripe Blog
+    url: https://stripe.com/blog/feed.rss
+    trust: high
+    why: Strong source for internet business infrastructure, payments, trust, and platform strategy.
+    use_for:
+      - business model signals
+      - trust rails
+      - operator infrastructure
+    caution: Select only when it meaningfully changes product or business thinking.
+
+  - id: paul_graham
+    role: strategist
+    track_bias:
+      - own_business
+      - better_decisions
+    name: Paul Graham Essays
+    url: https://feeds.feedburner.com/paulgraham
+    trust: high
+    why: Durable essays on startups, judgment, ambition, and selection problems.
+    use_for:
+      - company-building frameworks
+      - decision heuristics
+      - founder taste
+    caution: Essays are often evergreen; avoid reusing familiar arguments without a fresh angle.
+
+  - id: kevin_kelly
+    role: future_human
+    track_bias:
+      - daughters_future
+      - ai_change
+      - better_decisions
+    name: Kevin Kelly
+    url: https://kk.org/feed/
+    trust: medium
+    why: Long-horizon technology and human-future thinking with useful perspective breadth.
+    use_for:
+      - future implications
+      - human adaptation
+      - long-horizon framing
+    caution: Prefer pieces with concrete implications over abstract futurism.
 
 manual_watch_topics:
-  - AI agents for operators
-  - long-running AI application design
-  - opportunity validation and the right problem
-  - Paul Graham essays on founders, taste, and work
-  - trust rails for businesses and agents
-  - communication and writing as durable future skills
-  - self-learning, motivation, and confidence in children
-  - external memory and knowledge systems
-  - decision quality through tradeoffs and contradictions
+  - AI changing institutions, labor, and software economics
+  - children growing up in an AI-native world
+  - speaking, writing, self-learning, motivation, confidence
+  - product validation and finding the right problem
+  - trust systems, payments, and workflow infrastructure
+  - decision quality under uncertainty
+  - personal knowledge systems and retrieval
+  - external memory that compounds over time
 
 scoring:
   dimensions:
     relevance_to_active_questions: 0-5
-    model_update_strength: 0-5
     tradeoff_clarity: 0-5
-    business_or_future_consequence: 0-5
+    strategic_importance: 0-5
+    novelty: 0-5
     actionability: 0-5
-    knowledge_compounding_value: 0-5
+    model_update_strength: 0-5
+    future_human_value: 0-5
+    knowledge_base_value: 0-5
   penalties:
     hype_penalty: 0--3
-    repetition_penalty: 0--4
-    slop_penalty: 0--5
-  notes: >-
-    Final selection should optimize for decision usefulness, framework quality,
-    and track diversity rather than volume or novelty alone.
+    noise_penalty: 0--3
+    repetition_penalty: 0--5
+    no_tradeoff_penalty: 0--5
+  notes: Final selection should optimize for usefulness, not coverage.

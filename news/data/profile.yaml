@@ -4,66 +4,75 @@ purpose: Personal relevance model for SuSu Feed
 
 identity:
   summary: >-
-    Senior technical leader and aspiring business builder optimizing for long-term leverage,
-    better judgment, and a compounding knowledge system.
+    Senior technical leader and future-oriented builder optimizing for leverage,
+    judgment, long-term compounding, and real-world usefulness.
   orientation:
     - systems_thinking
-    - contradiction_analysis
-    - business_building
+    - strategic_judgment
+    - product_selection
     - engineering_execution
     - long_term_value
-    - learning_loops
+    - family_future_readiness
 
-feed_language:
-  primary: English
-  note: English first unless explicitly changed later.
-
-relevance_tracks:
+focus_tracks:
   - id: ai_change
-    description: Structural changes in AI, software, labor, institutions, and the world being built.
-    target_weight: 0.26
+    description: Structural shifts in technology, software, work, markets, and institutions caused by AI.
+    target_weight: 0.24
   - id: daughters_future
-    description: Future-readiness for the user's daughters, especially speaking, writing, self-learning, motivation, and confidence.
+    description: Signals that improve preparation for an AI-shaped future, especially speaking, writing, self-learning, motivation, and confidence.
     target_weight: 0.20
-  - id: business_building
-    description: "Running an own business: opportunity validation, wedges, trust, execution, distribution, and durable moats."
+  - id: own_business
+    description: Company building, product wedges, validation, trust, distribution, monetization, and operator lessons.
     target_weight: 0.22
-  - id: decision_quality
-    description: Judgment, tradeoffs, contradictions, failure modes, and better decision-making.
+  - id: better_decisions
+    description: Tradeoffs, contradictions, judgment frameworks, failure modes, and decision hygiene.
     target_weight: 0.18
-  - id: knowledge_memory
-    description: Remembering through external systems, retrieval, knowledge compounding, and reusable understanding.
-    target_weight: 0.14
+  - id: remembering
+    description: Knowledge systems, retrieval, external memory, and methods that turn learning into reusable judgment.
+    target_weight: 0.16
 
 selection_rules:
+  language: english_first
   max_daily_items: 4
   prefer_novel_over_repetitive: true
   prefer_decision_relevance_over_entertainment: true
+  prefer_tradeoff_aware_content: true
   require_why_it_matters: true
-  require_tradeoff_or_implication: true
+  require_model_update_or_action: true
   suppress_generic_news: true
+  suppress_inspirational_content: true
+  suppress_emotion_without_substance: true
   enforce_track_mix: true
-  english_first: true
 
 anti_slop:
-  must_do_one_of:
+  include_if_any:
     - updates_a_mental_model
-    - clarifies_a_tradeoff
+    - explains_tradeoffs
     - improves_a_real_decision
-    - reveals_a_future_pattern_with_consequences
-    - improves_the_knowledge_system
-    - improves_daughters_future_readiness
-  penalize_if_any:
-    - generic_ai_news_without_implication
+    - reveals_a_reusable_principle
+    - suggests_a_concrete_experiment
+    - improves_family_future_readiness
+    - strengthens_the_knowledge_base
+  exclude_if_any:
+    - generic_news_without_implication
     - tells_what_works_without_tradeoffs
-    - inspirational_quote_energy
-    - low_substance_emotion_first
-    - repeated_take_without_new_signal
-    - polished_but_obvious_summary
+    - inspirational_quotes_or_motivation_filler
+    - low_substance_emotional_content
+    - repeated_theme_without_new_signal
+    - polished_summary_of_obvious_information
+
+penalties:
+  hype: -2
+  generic_productivity_content: -3
+  repeated_topic_without_new_signal: -4
+  outrage_or_attention_trap: -4
+  no_tradeoff_discussion: -4
+  inspiration_without_mechanism: -5
+  low_substance_emotion: -5
 
 desired_outputs:
   include_idea_sparks: true
   include_life_or_family_nudge: true
   include_ignore_section: true
   include_reflection_question: true
-  include_tradeoff_note_when_relevant: true
+  include_tradeoff_or_tension: true
