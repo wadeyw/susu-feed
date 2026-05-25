@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SuSu Feed / Weekly Archive</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1020; --panel:#121a30; --text:#e5e7eb; --muted:#94a3b8; --accent:#7dd3fc; --border:#24304a; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.6 Inter,system-ui,sans-serif; background:linear-gradient(180deg,#0b1020 0%,#111827 100%); color:var(--text); }
+    .wrap { max-width:900px; margin:0 auto; padding:32px 20px 56px; }
+    .card { background:rgba(18,26,48,.86); border:1px solid var(--border); border-radius:16px; padding:20px; margin-bottom:16px; }
+    h1,h2 { margin:0 0 10px; line-height:1.2; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .list { list-style:none; padding:0; margin:12px 0 0; }
+    .list li { margin:8px 0; }
+    .status { color:var(--muted); }
+    code { background:#0b1222; border:1px solid var(--border); border-radius:6px; padding:1px 6px; color:#c4b5fd; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>SuSu Feed / Weekly Archive</h1>
+      <p>Weekly summaries and rollups.</p>
+    </section>
+
+    <section class="card">
+      <h2>Navigation</h2>
+      <ul class="list">
+          <li><a href="../../index.html">Home</a></li>
+          <li><a href="../index.html">News</a></li>
+          <li><a href="../daily/index.html">Daily archive</a></li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Items</h2>
+      <ul class="list" id="items"><li class="status">Loading…</li></ul>
+      <p class="status" id="status"></p>
+    </section>
+  </main>
+
+  <script>
+    const owner = 'wadeyw';
+    const repo = 'susu-feed';
+    const branch = 'main';
+    const contentPath = 'news/weekly';
+
+    function basePath() {
+      const path = window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+      const segments = path.split('/').filter(Boolean);
+      return segments.length ? '/' + segments[0] : '';
+    }
+
+    function pageUrl(path) {
+      const clean = path.replace(/^\//, '');
+      if (clean.endsWith('.md')) return `${basePath()}/${clean.replace(/\.md$/, '.html')}`;
+      return `${basePath()}/${clean}`;
+    }
+
+    async function init() {
+      const url = `https://api.github.com/repos/${owner}/${repo}/contents/${contentPath}?ref=${branch}`;
+      try {
+        const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+        if (!res.ok) throw new Error(`GitHub API returned ${res.status}`);
+        const raw = await res.json();
+        const files = raw
+          .filter(item => item.type === 'file' && item.name.endsWith('.md') && item.name !== 'README.md')
+          .sort((a, b) => b.name.localeCompare(a.name));
+        const list = document.getElementById('items');
+        if (!files.length) {
+          list.innerHTML = '<li class="status">No markdown items found yet.</li>';
+          document.getElementById('status').textContent = 'Nothing to show yet.';
+          return;
+        }
+        list.innerHTML = files.map(item => `<li><a href="${pageUrl(item.path)}">${item.name.replace(/\.md$/, '')}</a></li>`).join('');
+        document.getElementById('status').textContent = `Auto-discovered ${files.length} markdown item(s) from ${contentPath}.`;
+      } catch (err) {
+        document.getElementById('items').innerHTML = '<li class="status">Could not auto-load items.</li>';
+        document.getElementById('status').textContent = err.message;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

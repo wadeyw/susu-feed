@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SuSu Feed</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a30;
+      --panel-2: #0f172a;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --border: #24304a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 16px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #111827 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+    .hero {
+      background: linear-gradient(135deg, rgba(125,211,252,.12), rgba(167,139,250,.10));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1, h2, h3 { line-height: 1.2; margin: 0 0 10px; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.2rem; margin-top: 6px; }
+    p { margin: 0 0 12px; color: var(--text); }
+    .muted, .note { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .card {
+      background: rgba(18,26,48,.84);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      min-height: 180px;
+    }
+    .list {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+    .list li { margin: 8px 0; }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .status { color: var(--muted); font-size: 0.95rem; }
+    .footer {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    code {
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1px 6px;
+      color: #c4b5fd;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="pill">GitHub Pages home</div>
+      <h1>SuSu Feed</h1>
+      <p>A personal intelligence feed for Wade — tuned for AI change, daughters' future skills, own-business learning, better decisions, and remembering through a compounding knowledge base.</p>
+      <p class="note">This page auto-discovers new daily reports and reports/ notes, so normal content additions do not require manual homepage edits.</p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Start here</h2>
+        <ul class="list">
+          <li><a id="latest-daily-link" href="#">Latest daily feed</a></li>
+          <li><a id="daily-archive-link" href="#">Daily archive</a></li>
+          <li><a id="weekly-archive-link" href="#">Weekly archive</a></li>
+          <li><a id="reports-link" href="#">Reports</a></li>
+        </ul>
+        <p class="status" id="latest-daily-status">Loading latest daily feed…</p>
+      </article>
+
+      <article class="card">
+        <h2>System notes</h2>
+        <ul class="list" id="system-notes">
+          <li><a href="news/automation.html">Automation notes</a></li>
+          <li><a href="news/data/sources.yaml">Source rules</a></li>
+          <li><a href="news/data/active-questions.yaml">Active questions</a></li>
+          <li><a href="news/data/profile.yaml">Profile model</a></li>
+          <li><a href="news/data/feedback.yaml">Feedback model</a></li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Recent daily feeds</h2>
+        <ul class="list" id="recent-dailies">
+          <li class="status">Loading…</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Recent reports</h2>
+        <ul class="list" id="recent-reports">
+          <li class="status">Loading…</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="footer">If a new top-level content area is added beyond <code>news/daily</code>, <code>news/weekly</code>, or <code>reports</code>, update the directory list in <code>index.html</code>. Normal new files inside those folders are picked up automatically.</p>
+  </main>
+
+  <script>
+    const owner = 'wadeyw';
+    const repo = 'susu-feed';
+    const branch = 'main';
+
+    function basePath() {
+      const path = window.location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+      const segments = path.split('/').filter(Boolean);
+      return segments.length ? '/' + segments[0] : '';
+    }
+
+    function pageUrl(path) {
+      const clean = path.replace(/^\//, '');
+      if (clean.endsWith('.md')) {
+        return `${basePath()}/${clean.replace(/\.md$/, '.html')}`;
+      }
+      return `${basePath()}/${clean}`;
+    }
+
+    function apiUrl(path) {
+      return `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+    }
+
+    async function fetchDir(path) {
+      const res = await fetch(apiUrl(path), { headers: { 'Accept': 'application/vnd.github+json' } });
+      if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
+      return await res.json();
+    }
+
+    function mdFiles(items) {
+      return items
+        .filter(item => item.type === 'file' && item.name.endsWith('.md') && item.name !== 'README.md')
+        .sort((a, b) => b.name.localeCompare(a.name));
+    }
+
+    function setLink(id, path) {
+      document.getElementById(id).href = pageUrl(path);
+    }
+
+    function renderList(id, items, emptyText) {
+      const el = document.getElementById(id);
+      if (!items.length) {
+        el.innerHTML = `<li class="status">${emptyText}</li>`;
+        return;
+      }
+      el.innerHTML = items.map(item => {
+        const label = item.name.replace(/\.md$/, '');
+        return `<li><a href="${pageUrl(item.path)}">${label}</a></li>`;
+      }).join('');
+    }
+
+    async function init() {
+      setLink('daily-archive-link', 'news/daily/');
+      setLink('weekly-archive-link', 'news/weekly/');
+      setLink('reports-link', 'reports/');
+
+      try {
+        const [dailyRaw, reportsRaw] = await Promise.all([
+          fetchDir('news/daily'),
+          fetchDir('reports')
+        ]);
+
+        const daily = mdFiles(dailyRaw);
+        const reports = mdFiles(reportsRaw);
+
+        if (daily.length) {
+          const latest = daily[0];
+          const latestLink = document.getElementById('latest-daily-link');
+          latestLink.href = pageUrl(latest.path);
+          latestLink.textContent = `Latest daily feed: ${latest.name.replace(/\.md$/, '')}`;
+          document.getElementById('latest-daily-status').textContent = `Auto-picked from news/daily (${daily.length} entries).`;
+        } else {
+          document.getElementById('latest-daily-status').textContent = 'No daily feeds found yet.';
+        }
+
+        renderList('recent-dailies', daily.slice(0, 6), 'No daily feeds found yet.');
+        renderList('recent-reports', reports.slice(0, 6), 'No reports found yet.');
+      } catch (err) {
+        document.getElementById('latest-daily-status').textContent = `Auto-discovery failed: ${err.message}`;
+        document.getElementById('recent-dailies').innerHTML = '<li class="status">Open the daily archive manually.</li>';
+        document.getElementById('recent-reports').innerHTML = '<li class="status">Open the reports folder manually.</li>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
