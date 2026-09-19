@@ -1,8 +1,14 @@
 version: 3
-updated_at: 2026-05-25
+updated_at: 2026-09-19
 purpose: >-
-  English-first source configuration for SuSu Feed. Sources are raw inputs, not subscriptions.
-  Every selected item must survive anti-slop, anti-repeat, and active-question filtering.
+  English-first source configuration for SuSu Feed, aligned to the v3 tracks.
+  Sources are raw inputs, not subscriptions. Every selected item must survive
+  anti-slop, anti-repeat, and active-question filtering.
+
+# Feed types supported by news/scripts/collect_candidates.py:
+# - type: rss       -> url is an RSS/Atom feed, parsed with the standard parser
+# - type: api       -> url + optional params; JSON array of {title,url,date,snippet}
+# - type: sitemap   -> url is a content sitemap; items parsed from <loc> (newest N by URL order)
 
 source_roles:
   - id: scout
@@ -11,10 +17,12 @@ source_roles:
     description: Practical implementation lessons, design choices, tradeoffs, and failure modes.
   - id: strategist
     description: Market structure, product selection, positioning, timing, and business pattern shifts.
+  - id: competitor
+    description: Direct competitor content — moves, positioning, feature and content signals.
   - id: future_human
     description: Education, capability-building, and long-term human development signals.
-  - id: memory_systems
-    description: Knowledge systems, retrieval, research, and reusable thinking infrastructure.
+  - id: growth
+    description: Skill-building, communication, and personal practice material.
 
 admission_rules:
   include_if_any:
@@ -23,6 +31,7 @@ admission_rules:
     - improves_a_real_decision
     - reveals_an_early_pattern_with_implication
     - sparks_a_concrete_idea
+    - shows_a_competitor_or_platform_move_with_implication
     - improves_family_future_readiness
     - strengthens_the_knowledge_base
   exclude_if_any:
@@ -33,6 +42,7 @@ admission_rules:
     - repeated_opinion_without_new_signal
     - high_hype_low_substance
     - broadly_interesting_but_not_useful
+    - marketing_flosk_from_competitor_blogs_without_concrete_move
 
 recent_reuse_guard:
   enabled: true
@@ -44,43 +54,129 @@ recent_reuse_guard:
     - direct_followup_with_clear_new_signal
 
 feeds:
-  - id: hn_frontpage
-    role: scout
-    track_bias:
-      - ai_change
-      - own_business
-      - remembering
-    name: Hacker News front page
-    url: https://hnrss.org/frontpage
+  # ---- Work / influencer marketing ----
+  - id: ahacreator_content
+    type: sitemap
+    role: competitor
+    track_bias: [influencer_mktg]
+    name: Ahacreator content (competitor)
+    url: https://www.ahacreator.com/sitemaps/content/en/s1_0.xml
     trust: medium
-    why: Broad weak-signal surface for AI, developer tooling, startup, infra, and knowledge-work shifts.
+    why: Direct competitor; new how-to, glossary, and tool pages reveal positioning, feature focus, and cross-border seller targeting. No RSS feed exists; the content sitemap is the reliable watch surface.
     use_for:
-      - weak signals
-      - unusual tools or papers
-      - early discussion around meaningful changes
-    caution: Very noisy; select only when the item clearly updates a model or decision.
+      - competitor feature and content moves
+      - new benchmarks for attribution / sourcing
+      - cross-border going-overseas messaging
+    caution: Marketing-adjacent; only select when a concrete move or new claim changes our picture.
 
-  - id: openai_news
-    role: strategist
-    track_bias:
-      - ai_change
-      - own_business
-    name: OpenAI News
-    url: https://openai.com/news/rss.xml
-    trust: high
-    why: Major AI platform and product moves can shift assumptions about capability, distribution, and timing.
+  - id: tiktok_newsroom
+    type: sitemap
+    role: operator
+    track_bias: [influencer_mktg]
+    name: TikTok Newsroom (competitor/platform)
+    url: https://newsroom.tiktok.com/sitemap.xml
+    trust: medium
+    why: Official TikTok creator-program and policy moves that directly shape the channel we sell into. The newsroom has no working RSS (returns HTML); the content sitemap is the reliable watch surface.
     use_for:
-      - platform shifts
-      - product timing
-      - ecosystem implications
-    caution: Treat announcements as signals, not conclusions.
+      - creator program / creator fund changes
+      - commercial content policy
+      - brand-partnership tooling
+    caution: Best-effort (no lastmod, ordering not guaranteed). Agent curates; corporate PR — verify product moves against the actual product surface.
+
+  - id: youtube_creator_blog
+    type: rss
+    role: operator
+    track_bias: [influencer_mktg]
+    name: YouTube blog
+    url: https://blog.youtube/rss/
+    trust: high
+    why: YouTube product, creator-tools, and monetization changes for the channel half of our stack.
+    use_for:
+      - creator analytics and attribution features
+      - Shorts / long-form strategy shifts
+      - monetization and ads changes
+    caution: Select only when it changes how we measure or recommend creator performance.
+
+  - id: forage
+    type: rss
+    role: competitor
+    track_bias: [influencer_mktg]
+    name: Forage (competitor) — watch only
+    url: https://www.forageapp.com/feed/
+    trust: low
+    why: Another creator-discovery + workflow platform; good for feature-pattern benchmarking.
+    use_for:
+      - discovery and matching features
+      - campaign workflow ideas
+    caution: >-
+      AS OF 2026-09-19 this endpoint returns a 114-byte JS challenge page, not
+      RSS — the collector will log it as a fetch error, which is expected and
+      safe to ignore. Keep the entry for manual spot-checks; if a real feed
+      appears, it starts flowing again automatically.
+
+  - id: kold
+    type: rss
+    role: competitor
+    track_bias: [influencer_mktg, ai_change]
+    name: Kold.ai (competitor) — watch only
+    url: https://kold.ai/feed
+    trust: low
+    why: AI-native creator discovery and matching — the closest architectural analog to what we are building.
+    use_for:
+      - AI matching and sourcing patterns
+      - how they position "result driven"
+    caution: >-
+      AS OF 2026-09-19 this endpoint returns a 114-byte JS challenge page, not
+      RSS — the collector logs it as a fetch error, which is expected. Keep for
+      manual spot-checks; a real feed reactivates it automatically.
+
+  - id: captiv8
+    type: rss
+    role: competitor
+    track_bias: [influencer_mktg]
+    name: Captiv8 (competitor)
+    url: https://www.captiv8.com/blog/rss/
+    trust: medium
+    why: Enterprise creator-management benchmark; useful for how we serve bigger client budgets later.
+    use_for:
+      - enterprise GTM and reporting patterns
+      - creator governance and brand-safety features
+    caution: Enterprise framing; only select when the pattern transfers to our stage.
+
+  # ---- AI (narrowed lenses) ----
+  - id: arxiv_cs_ai
+    type: rss
+    role: scout
+    track_bias: [ai_change, influencer_mktg]
+    name: arXiv cs.AI (newest)
+    url: https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=5
+    trust: high
+    why: Weak-signal frontier surface; reachable from this server and not bot-walled like general search engines. Returns Atom, parsed by the standard feed parser.
+    use_for:
+      - capability patterns that reach product form in 6-18 months
+      - eval / agent incidents that matter for agent-trust questions
+    caution: Select only items with a product, workflow, or risk implication — not paper-list tourism.
+
+  - id: hn_algolia_creatoreconomy
+    type: api
+    role: scout
+    track_bias: [ai_change, influencer_mktg]
+    name: "HN search — creator economy stories"
+    url: https://hn.algolia.com/api/v1/search
+    params:
+      query: "influencer OR creator OR creator economy"
+      tags: story
+      hitsPerPage: 10
+    trust: medium
+    why: Operator-grade discussion signal on creator-economy mechanics, cheaper to read than the raw front page.
+    use_for:
+      - discussion patterns on creator business, attribution, and platform risk
+    caution: Noisy; prefer comments on a specific mechanic over generic threads.
 
   - id: simon_willison
+    type: rss
     role: operator
-    track_bias:
-      - ai_change
-      - better_decisions
-      - remembering
+    track_bias: [ai_change, influencer_mktg]
     name: Simon Willison
     url: https://simonwillison.net/atom/everything/
     trust: high
@@ -91,27 +187,99 @@ feeds:
       - operator-grade patterns
     caution: Prefer posts with reusable implications over narrow implementation minutiae.
 
-  - id: stripe_blog
+  - id: openai_news
+    type: rss
     role: strategist
-    track_bias:
-      - own_business
-      - ai_change
-      - better_decisions
-    name: Stripe Blog
-    url: https://stripe.com/blog/feed.rss
+    track_bias: [ai_change]
+    name: OpenAI News
+    url: https://openai.com/news/rss.xml
     trust: high
-    why: Strong source for internet business infrastructure, payments, trust, and platform strategy.
+    why: Major AI platform moves can shift capability, distribution, and timing assumptions.
     use_for:
-      - business model signals
-      - trust rails
-      - operator infrastructure
-    caution: Select only when it meaningfully changes product or business thinking.
+      - platform shifts
+      - product timing
+    caution: Treat announcements as signals, not conclusions.
 
-  - id: paul_graham
+  # ---- Cross-industry (open ideas; the agent rotates the week's industry) ----
+  - id: sequoia
+    type: rss
     role: strategist
-    track_bias:
-      - own_business
-      - better_decisions
+    track_bias: [cross_industry, influencer_mktg]
+    name: Sequoia
+    url: https://www.sequoiacap.com/feed/
+    trust: high
+    why: >-
+      Verified working (50 items) from this server. Strategy essays on market
+      structure, product selection, and timing — a strong source for
+      transferable "opposite industry" ideas, and useful for how funded
+      creator-economy plays are positioned.
+    use_for:
+      - market-structure thinking that transfers to our domain
+      - thesis pieces on creator economy / AI commerce
+    caution: VC-thesis framing; extract the transferable mechanic, not the deal hype.
+
+  - id: techmeme
+    type: rss
+    role: scout
+    track_bias: [cross_industry, ai_change]
+    name: Techmeme (aggregator)
+    url: https://feeds.feedburner.com/techmeme
+    trust: medium
+    why: Cross-industry pattern surface — useful for one item a week from the rotating opposite industry.
+    use_for:
+      - transferable playbooks across industries
+      - early pattern detection
+    caution: Heavily covered tech news; only select when a mechanic transfers to our world.
+
+  - id: pragmatic_engineer
+    type: rss
+    role: operator
+    track_bias: [cross_industry, better_decisions]
+    name: Pragmatic Engineer
+    url: https://newsletter.pragmaticengineer.com/feed
+    trust: high
+    why: Deep operator patterns on how teams and products actually work — a strong cross-industry transfer source.
+    use_for:
+      - engineering org and product patterns
+      - revenue and pricing mechanics
+    caution: Dev-centric; prefer items with a transferable business pattern.
+
+  - id: stratechery
+    type: rss
+    role: strategist
+    track_bias: [cross_industry, better_decisions]
+    name: Stratechery
+    url: https://stratechery.com/feed/
+    trust: high
+    why: Market structure and strategy essays; occasional gold for "why the industry shape is what it is."
+    use_for:
+      - market structure shifts
+      - strategy pattern transfers
+    caution: Paywalled after the intro; pick items with an accessible core argument.
+
+  # ---- Family / daughters ----
+  - id: edsurge
+    type: rss
+    role: future_human
+    track_bias: [family_future]
+    name: EdSurge
+    url: https://www.edsurge.com/feed
+    trust: medium
+    why: >-
+      Education-news surface for an AI-shaped future: how schools, systems, and
+      kids' capabilities are actually changing. Verified working (50 items)
+      from this server, unlike the dead Kevin Kelly stub feed it replaced
+      (2026-09-19).
+    use_for:
+      - AI-in-classroom shifts
+      - capability-building trends for the two daughters' age range
+    caution: News-y; prefer items with a concrete capability or habit implication.
+
+  # ---- Existing durable sources (kept) ----
+  - id: paul_graham
+    type: rss
+    role: strategist
+    track_bias: [better_decisions, cross_industry]
     name: Paul Graham Essays
     url: https://feeds.feedburner.com/paulgraham
     trust: high
@@ -119,34 +287,30 @@ feeds:
     use_for:
       - company-building frameworks
       - decision heuristics
-      - founder taste
-    caution: Essays are often evergreen; avoid reusing familiar arguments without a fresh angle.
+    caution: Evergreen; avoid reusing familiar arguments without a fresh angle.
 
-  - id: kevin_kelly
-    role: future_human
-    track_bias:
-      - daughters_future
-      - ai_change
-      - better_decisions
-    name: Kevin Kelly
-    url: https://kk.org/feed/
-    trust: medium
-    why: Long-horizon technology and human-future thinking with useful perspective breadth.
+  - id: stripe_blog
+    type: rss
+    role: strategist
+    track_bias: [cross_industry]
+    name: Stripe Blog
+    url: https://stripe.com/blog/feed.rss
+    trust: high
+    why: Strong source on internet business infrastructure, payments, trust, and platform strategy.
     use_for:
-      - future implications
-      - human adaptation
-      - long-horizon framing
-    caution: Prefer pieces with concrete implications over abstract futurism.
+      - business model signals
+      - trust rails
+    caution: Select only when it changes product or business thinking.
 
 manual_watch_topics:
-  - AI changing institutions, labor, and software economics
-  - children growing up in an AI-native world
-  - speaking, writing, self-learning, motivation, confidence
-  - product validation and finding the right problem
-  - trust systems, payments, and workflow infrastructure
-  - decision quality under uncertainty
-  - personal knowledge systems and retrieval
-  - external memory that compounds over time
+  - China brands going overseas: creator sourcing, localization, channel mix
+  - Creator attribution and ROI measurement (vs. competitors' claims)
+  - Platform creator programs: TikTok creator fund, YouTube monetization, Instagram Reels
+  - AI-native creator discovery and matching (Kold, Forage, Ahacreator moves)
+  - AI tools we could embed: content generation, matching, analytics, agent commerce
+  - Rotating opposite industry of the week (cross_industry track)
+  - Daughters: speaking confidence, writing, self-learning, motivation, tech literacy
+  - Small-talk rep practice: openers, follow-ups, personal anecdote bank
 
 scoring:
   dimensions:
@@ -155,12 +319,17 @@ scoring:
     strategic_importance: 0-5
     novelty: 0-5
     actionability: 0-5
-    model_update_strength: 0-5
-    future_human_value: 0-5
+    competitor_move_clarity: 0-5
+    family_future_value: 0-5
     knowledge_base_value: 0-5
   penalties:
     hype_penalty: 0--3
     noise_penalty: 0--3
     repetition_penalty: 0--5
     no_tradeoff_penalty: 0--5
-  notes: Final selection should optimize for usefulness, not coverage.
+    competitor_flosk_penalty: 0--3
+  notes: >-
+    Final selection optimizes for usefulness, not coverage. Competitor-sourced
+    items need a concrete move or claim to survive the flosk penalty.
+    Skill_drill does not consume a candidate item; it is generated from
+    news/data/conversation-bank.md on its own slot.

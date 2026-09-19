@@ -15,6 +15,7 @@ import json
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -34,6 +35,7 @@ SOURCES = DATA / "sources.yaml"
 PROFILE = DATA / "profile.yaml"
 QUESTIONS = DATA / "active-questions.yaml"
 FEEDBACK = DATA / "feedback.yaml"
+CONVERSATION_BANK = DATA / "conversation-bank.md"
 
 USER_AGENT = "SuSuFeed/0.2 (+https://github.com/wadeyw/susu-feed)"
 MAX_PER_FEED = 6
@@ -128,6 +130,60 @@ def parse_feed(xml_bytes: bytes) -> list[dict[str, str | None]]:
     return out
 
 
+def collect_api_feed(url: str, params: dict[str, Any]) -> list[dict[str, str | None]]:
+    """Fetch a JSON API that returns a list of items.
+
+    Supports two shapes: a bare JSON array, or an object whose list is under a
+    known key ("data", "hits", "entries", "items", "results", "articles").
+    Each item is normalized to {title, url, published, summary}.
+    """
+    query = urllib.parse.urlencode(params or {})
+    fetch_url = f"{url}?{query}" if query else url
+    payload = json.loads(fetch(fetch_url))
+    if isinstance(payload, dict):
+        for key in ("data", "hits", "entries", "items", "results", "articles"):
+            value = payload.get(key)
+            if isinstance(value, list):
+                payload = value
+                break
+    out = []
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        title = item.get("title") or item.get("headline") or ""
+        url_value = item.get("url") or item.get("link") or item.get("abstract_url") or ""
+        if not title and not url_value:
+            continue
+        out.append({
+            "title": strip_text(str(title), 180) or url_value,
+            "url": strip_text(str(url_value), 500),
+            "published": parse_date(str(item.get("published") or item.get("date") or "")),
+            "summary": strip_text(str(item.get("snippet") or item.get("story_text") or item.get("abstract") or item.get("summary") or ""), 500),
+        })
+    return out
+
+
+def collect_sitemap(url: str, limit: int = MAX_PER_FEED) -> list[dict[str, str | None]]:
+    """Parse a content sitemap and return the newest `limit` URLs.
+
+    Assumes sitemap URLs are ordered oldest-first (Ahacreator's content
+    sitemap is). Newest N are taken from the tail. The final path segment is
+    used as a human-readable title.
+    """
+    root = ET.fromstring(fetch(url))
+    locs = [n.text for n in root.iter() if n.tag.split("}")[-1].lower() == "loc" and n.text]
+    newest = [loc for loc in locs if loc.endswith((".html", ""))][-limit:]
+    return [
+        {
+            "title": strip_text(loc.rstrip("/").split("/")[-1].replace("-", " ").replace("_", " "), 180),
+            "url": loc,
+            "published": None,
+            "summary": "",
+        }
+        for loc in newest
+    ]
+
+
 def collect_recent_history(lookback_days: int) -> dict[str, Any]:
     today = dt.date.today()
     recent_urls: set[str] = set()
@@ -191,34 +247,66 @@ def main() -> int:
     recent_url_set = set(history['recent_urls'])
     recent_title_slug_set = set(history['recent_title_slugs'])
 
+    focus_tracks = profile.get("focus_tracks", [])
+
+    # Skill-drill material: the conversation bank is pulled into the packet so
+    # the agent can generate a small-talk drill without reading files by hand.
+    bank_path = CONVERSATION_BANK
+    bank_text = bank_path.read_text() if bank_path.exists() else ""
+
+    # Cross-industry rotation: pick this ISO week's industry deterministically.
+    rotation = next(
+        (t.get("rotation", []) for t in focus_tracks if t.get("rotation")), []
+    )
+    iso_week = dt.date.today().isocalendar()[1]
+    rotation_index = iso_week % len(rotation) if rotation else None
+    this_week_industry = rotation[rotation_index] if rotation_index is not None else None
+
     packet: dict[str, Any] = {
-        'generated_at_utc': dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
-        'repo_root': str(ROOT),
-        'output_path_suggestion': f"news/daily/{dt.date.today().isoformat()}.md",
-        'purpose': 'Candidate packet for LLM curation. Do not include items unless they materially matter to the user.',
-        'selection_rules': profile.get('selection_rules', {}),
-        'anti_slop': profile.get('anti_slop', {}),
-        'source_admission_rules': sources.get('admission_rules', {}),
-        'manual_watch_topics': sources.get('manual_watch_topics', []),
-        'focus_tracks': profile.get('focus_tracks', []),
-        'active_questions': questions.get('questions', []),
-        'feedback_states': feedback.get('item_feedback_states', []),
-        'recent_reuse_guard': {
-            'enabled': reuse_guard.get('enabled', True),
-            'lookback_days': history['lookback_days'],
-            'blocked_recent_url_count': len(recent_url_set),
-            'blocked_recent_title_count': len(recent_title_slug_set),
-            'recent_items': history['recent_items'],
+        "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
+        "repo_root": str(ROOT),
+        "output_path_suggestion": f"news/daily/{dt.date.today().isoformat()}.md",
+        "purpose": "Candidate packet for LLM curation. Do not include items unless they materially matter to the user.",
+        "selection_rules": profile.get("selection_rules", {}),
+        "anti_slop": profile.get("anti_slop", {}),
+        "source_admission_rules": sources.get("admission_rules", {}),
+        "manual_watch_topics": sources.get("manual_watch_topics", []),
+        "focus_tracks": focus_tracks,
+        "active_questions": questions.get("questions", []),
+        "feedback_states": feedback.get("item_feedback_states", []),
+        "cross_industry_this_week": {
+            "iso_week": iso_week,
+            "industry": this_week_industry,
+            "note": "Select at most one item from this rotating industry this week. Transferable ideas beat industry news.",
         },
-        'candidates': [],
-        'filtered_recent_duplicates': [],
-        'fetch_errors': [],
+        "skill_drill": {
+            "bank_file": str(bank_path),
+            "bank_present": bool(bank_text),
+            "bank_excerpt": bank_text[:4000],
+            "note": "Generate the daily small-talk drill from the conversation bank. One rep, one opener or follow-up, one optional personal anecdote.",
+        },
+        "recent_reuse_guard": {
+            "enabled": reuse_guard.get("enabled", True),
+            "lookback_days": history["lookback_days"],
+            "blocked_recent_url_count": len(recent_url_set),
+            "blocked_recent_title_count": len(recent_title_slug_set),
+            "recent_items": history["recent_items"],
+        },
+        "candidates": [],
+        "filtered_recent_duplicates": [],
+        "fetch_errors": [],
     }
 
-    for feed in sources.get('feeds', []):
+    for feed in sources.get("feeds", []):
+        ftype = feed.get("type", "rss")
         try:
-            xml_bytes = fetch(feed['url'])
-            parsed = parse_feed(xml_bytes)[:MAX_PER_FEED]
+            if ftype == "api":
+                parsed = collect_api_feed(feed["url"], feed.get("params", {}))[:MAX_PER_FEED]
+            elif ftype == "sitemap":
+                parsed = collect_sitemap(feed["url"])
+            else:
+                xml_bytes = fetch(feed["url"])
+                parsed = parse_feed(xml_bytes)[:MAX_PER_FEED]
             for item in parsed:
                 title = item.get('title') or ''
                 url = item.get('url') or ''
@@ -248,11 +336,13 @@ def main() -> int:
                     'source_caution': feed.get('caution'),
                     **item,
                 })
-        except (urllib.error.URLError, TimeoutError, ET.ParseError, KeyError) as exc:
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
+                ET.ParseError, KeyError, json.JSONDecodeError, ValueError,
+                TypeError) as exc:
             packet['fetch_errors'].append({
                 'source_id': feed.get('id'),
                 'url': feed.get('url'),
-                'error': str(exc)[:300],
+                'error': f"{type(exc).__name__}: {exc}"[:300],
             })
 
     packet['candidates'] = packet['candidates'][:MAX_TOTAL]

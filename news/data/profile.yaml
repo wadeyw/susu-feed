@@ -1,11 +1,15 @@
-version: 2
-updated_at: 2026-05-25
-purpose: Personal relevance model for SuSu Feed
+version: 3
+updated_at: 2026-09-19
+purpose: Personal relevance model for SuSu Feed — v3 aligned to Wade's five dimensions.
 
 identity:
   summary: >-
     Senior technical leader and future-oriented builder optimizing for leverage,
-    judgment, long-term compounding, and real-world usefulness.
+    judgment, long-term compounding, and real-world usefulness. Currently
+    building a result-driven influencer marketing platform: find the right
+    influencer, post the right content, in the right channel, to achieve brand
+    and product marketing goals. Channels: Instagram, YouTube, TikTok.
+    Clients: China companies going overseas. Competitor benchmark: Ahacreator.
   orientation:
     - systems_thinking
     - strategic_judgment
@@ -15,25 +19,56 @@ identity:
     - family_future_readiness
 
 focus_tracks:
+  - id: influencer_mktg
+    description: >-
+      Result-driven influencer marketing: creator discovery and matching,
+      content-performance attribution (ROI proof), channel selection, cross-border
+      creator economy (China brands going overseas), competitor moves
+      (Ahacreator and peers), platform creator programs and policy changes.
+    target_weight: 0.30
+    daily_cap: 2
   - id: ai_change
-    description: Structural shifts in technology, software, work, markets, and institutions caused by AI.
-    target_weight: 0.24
-  - id: daughters_future
-    description: Signals that improve preparation for an AI-shaped future, especially speaking, writing, self-learning, motivation, and confidence.
+    description: >-
+      Latest AI, narrowed to two lenses: (a) AI tools that could improve our
+      own workflow (content generation, creator matching, analytics,
+      agent-driven commerce), (b) one structural frontier item per week.
+      Generic announcements are rejected.
     target_weight: 0.20
-  - id: own_business
-    description: Company building, product wedges, validation, trust, distribution, monetization, and operator lessons.
-    target_weight: 0.22
-  - id: better_decisions
-    description: Tradeoffs, contradictions, judgment frameworks, failure modes, and decision hygiene.
-    target_weight: 0.18
-  - id: remembering
-    description: Knowledge systems, retrieval, external memory, and methods that turn learning into reusable judgment.
-    target_weight: 0.16
+    daily_cap: 1
+  - id: cross_industry
+    description: >-
+      One rotating opposite industry per week, open ideas only. Transferable
+      ideas beat industry news. Agent picks the week's industry from the
+      rotation by ISO-week number, and selects at most one item.
+    target_weight: 0.15
+    daily_cap: 1
+    rotation:
+      - e-commerce
+      - fintech
+      - gaming
+      - saas
+      - d2c
+      - logistics
+  - id: family_future
+    description: >-
+      Two daughters (born 2022-12 and 2024-06, Singapore): speaking confidence,
+      writing, self-directed learning, motivation, tech literacy, education
+      trends in an AI-shaped future. Weekly floor: one item, or an honest
+      "no signal today" note — never padding.
+    target_weight: 0.15
+    daily_cap: 1
+  - id: skill_drill
+    description: >-
+      Communication / small-talk practice. Not a news track: delivered as the
+      daily skill-drill nudge plus a weekly streak check. Material bank lives
+      in news/data/conversation-bank.md.
+    target_weight: 0.20
+    daily_cap: 1
+    delivery: nudge_slot_only
 
 selection_rules:
   language: english_first
-  max_daily_items: 4
+  max_daily_items: 5
   prefer_novel_over_repetitive: true
   prefer_decision_relevance_over_entertainment: true
   prefer_tradeoff_aware_content: true
@@ -43,6 +78,10 @@ selection_rules:
   suppress_inspirational_content: true
   suppress_emotion_without_substance: true
   enforce_track_mix: true
+  item_markers:
+    - do_today      # act this week
+    - watch         # track over time
+    - idea          # sparks an experiment or feature idea
 
 anti_slop:
   include_if_any:
@@ -51,6 +90,7 @@ anti_slop:
     - improves_a_real_decision
     - reveals_a_reusable_principle
     - suggests_a_concrete_experiment
+    - shows_a_competitor_or_platform_move_with_implication
     - improves_family_future_readiness
     - strengthens_the_knowledge_base
   exclude_if_any:
@@ -60,6 +100,7 @@ anti_slop:
     - low_substance_emotional_content
     - repeated_theme_without_new_signal
     - polished_summary_of_obvious_information
+    - marketing_flosk_from_competitor_blogs_without_concrete_move
 
 penalties:
   hype: -2
@@ -71,6 +112,7 @@ penalties:
   low_substance_emotion: -5
 
 desired_outputs:
+  include_skill_drill: true
   include_idea_sparks: true
   include_life_or_family_nudge: true
   include_ignore_section: true

@@ -1,28 +1,42 @@
-version: 2
-updated_at: 2026-05-25
+version: 3
+updated_at: 2026-09-19
 questions:
   - id: AQ1
+    track: influencer_mktg
+    status: active
+    priority: high
+    question: >-
+      How do we prove attribution and ROI better than Ahacreator and similar
+      platforms, and which competitor moves, platform creator programs, or
+      cross-border creator-economy shifts change the sourcing-channel game?
+  - id: AQ2
     track: ai_change
     status: active
     priority: high
-    question: How is AI structurally changing software, work, markets, and institutions beyond surface-level product announcements?
-  - id: AQ2
-    track: daughters_future
-    status: active
-    priority: high
-    question: What capabilities, habits, and environments will best prepare my daughters for an AI-shaped future, especially in speaking, writing, self-learning, motivation, and confidence?
+    question: >-
+      Which AI tools could we embed in our own workflow (creator discovery,
+      content generation, performance analytics, agent-driven commerce), and
+      what structural AI shifts matter beyond surface announcements?
   - id: AQ3
-    track: own_business
+    track: cross_industry
     status: active
-    priority: high
-    question: What can help me build my own business with better timing, validation, trust, and execution rather than just more ideas?
+    priority: medium
+    question: >-
+      From this week's rotating opposite industry, what is one transferable
+      idea we have not tried yet?
   - id: AQ4
-    track: better_decisions
+    track: family_future
     status: active
     priority: high
-    question: What frameworks, tradeoffs, contradictions, or failure modes would help me make better decisions?
+    question: >-
+      What capabilities, habits, and environments will best prepare my
+      daughters for an AI-shaped future — speaking, writing, self-learning,
+      motivation, confidence, and tech literacy?
   - id: AQ5
-    track: remembering
+    track: skill_drill
     status: active
     priority: high
-    question: How can the knowledge base we are building help me remember, retrieve, and reuse what matters?
+    question: >-
+      Can I turn small talk into a daily rep-based practice loop, and what
+      is the minimal set of openers, follow-ups, and personal anecdotes that
+      keeps working?
