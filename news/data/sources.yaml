@@ -218,14 +218,19 @@ feeds:
       - thesis pieces on creator economy / AI commerce
     caution: VC-thesis framing; extract the transferable mechanic, not the deal hype.
 
-  - id: techmeme
+  - id: techcrunch
     type: rss
     role: scout
     track_bias: [cross_industry, ai_change]
-    name: Techmeme (aggregator)
-    url: https://feeds.feedburner.com/techmeme
+    name: TechCrunch
+    url: https://techcrunch.com/feed/
     trust: medium
-    why: Cross-industry pattern surface — useful for one item a week from the rotating opposite industry.
+    why: >-
+      Current general tech + business news surface — the cross-industry rotation
+      needs fresh weekly signal. Verified working from this server
+      (20 items, dated 2026-09-19). Replaces the Techmeme feedburner feed,
+      which returns 2015 items only (feed broken, flagged by the 2026-09-20
+      cron run).
     use_for:
       - transferable playbooks across industries
       - early pattern detection
